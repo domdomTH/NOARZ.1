@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0a0a14;
+            background-image: linear-gradient(to bottom, #0a0a14, #1a1a2e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4834d4;
+            margin-bottom: 20px;
+        }
+        
+        .admin-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px #4834d4;
+            letter-spacing: 2px;
+        }
+        
+        .admin-logout {
+            padding: 8px 15px;
+            background-color: rgba(72, 52, 212, 0.3);
+            color: white;
+            border: 1px solid #4834d4;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        
+        .admin-logout:hover {
+            background-color: rgba(72, 52, 212, 0.5);
+            box-shadow: 0 0 10px rgba(72, 52, 212, 0.5);
+        }
+        
+        .admin-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .admin-section {
+            background-color: rgba(10, 10, 20, 0.5);
+            border: 1px solid #4834d4;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(72, 52, 212, 0.3);
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .admin-section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(72, 52, 212, 0.5);
+            color: #4834d4;
+            text-shadow: 0 0 5px rgba(72, 52, 212, 0.3);
+        }
+        
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .file-list li {
+            padding: 10px;
+            background-color: rgba(10, 10, 20, 0.7);
+            border: 1px solid rgba(72, 52, 212, 0.3);
+            border-radius: 3px;
+            margin-bottom: 10px;
+        }
+        
+        .file-list a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .file-list a:hover {
+            color: #4834d4;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <div class="admin-title">Admin Dashboard</div>
+        <a href="/logout" class="admin-logout">Logout</a>
+    </div>
+    
+    <div class="admin-content">
+        <div class="admin-section">
+            <div class="admin-section-title">Protected Source Files</div>
+            <ul class="file-list" id="file-list">
+                <!-- Files will be loaded here -->
+                <li><a href="/source/index.html">index.html</a></li>
+                <li><a href="/source/code-protection.js">code-protection.js</a></li>
+                <li><a href="/source/main.js">main.js</a></li>
+            </ul>
+        </div>
+        
+        <div class="admin-section">
+            <div class="admin-section-title">Admin Controls</div>
+            <p>Welcome to the protected admin area. Here you can access the source code and manage your website.</p>
+            <p>Your admin code is: <strong>0988131688</strong></p>
+        </div>
+    </div>
+    
+    <script>
+        // Add code protection
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+            if (
+                e.keyCode === 123 || 
+                (e.ctrlKey && e.shiftKey && e.keyCode === 73) || 
+                (e.ctrlKey && e.shiftKey && e.keyCode === 74) || 
+                (e.ctrlKey && e.keyCode === 85)
+            ) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Load file list
+        fetch('/api/files')
+            .then(response => response.json())
+            .then(files => {
+                const fileList = document.getElementById('file-list');
+                fileList.innerHTML = '';
+                
+                files.forEach(file => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `/source/${file}`;
+                    a.textContent = file;
+                    li.appendChild(a);
+                    fileList.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading file list:', error);
+            });
+    </script>
+</body>
+</html>

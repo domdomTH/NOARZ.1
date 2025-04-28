@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOARZ</title>
+    <!-- GitHub API Integration -->
+    <script src="github-config.js"></script>
+    <script src="github-api.js"></script>
+    <script src="data-manager.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
 
@@ -2634,7 +2638,10 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize the data manager
+            await window.dataManager.initialize();
+
             const fox = document.getElementById('fox');
             const dialogueBox = document.getElementById('dialogue-box');
             const dialogueText = document.getElementById('dialogue-text');
@@ -2652,8 +2659,10 @@
             let isRunning = true;
             let animationId = null;
 
+            // Get admin settings
+            const adminSettings = await window.dataManager.getAdminSettings();
             // The correct admin password
-            const CORRECT_PASSWORD = "0988131688";
+            const CORRECT_PASSWORD = adminSettings.adminCode || "0988131688";
 
             function updateFoxPosition() {
                 if (!isRunning) {
@@ -3159,72 +3168,23 @@
             let currentGalleryImages = [];
             let currentImageIndex = 0;
 
-            // Initialize news array from localStorage or create sample data
-            let newsItems = JSON.parse(localStorage.getItem('jjkNews'));
+            // Initialize news array from data manager
+            let newsItems = [];
 
-            // If no news exists, create sample data
-            if (!newsItems || newsItems.length === 0) {
-                const now = new Date();
-                const yesterday = new Date(now);
-                yesterday.setDate(yesterday.getDate() - 1);
-                const twoDaysAgo = new Date(now);
-                twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
-                newsItems = [
-                    {
-                        id: '1',
-                        title: 'Jujutsu High Announces New First-Grade Sorcerers',
-                        category: 'roblox-script',
-                        content: 'Tokyo Jujutsu High School has officially promoted three sorcerers to first-grade status following their exceptional performance in recent missions. The promotion ceremony will be held next week at the main campus.\n\nThe newly promoted sorcerers have demonstrated exceptional skill in recent missions against special grade cursed spirits. Their contributions to the jujutsu society have been recognized by the higher-ups, leading to this well-deserved promotion.\n\nAttendance at the ceremony is by invitation only, and all participants are required to follow strict security protocols due to the current heightened alert status.',
-                        coverImageUrl: 'https://i.imgur.com/JQgQFJw.jpg',
-                        galleryImages: [
-                            'https://i.imgur.com/8LHFvs3.jpg',
-                            'https://i.imgur.com/JM1GvZw.jpg',
-                            'https://i.imgur.com/zTwgQWs.jpg'
-                        ],
-                        date: now.toISOString(),
-                        edited: null
-                    },
-                    {
-                        id: '2',
-                        title: 'Special Grade Cursed Spirit Sighted in Shibuya',
-                        category: 'runner',
-                        content: 'Reports confirm that a special grade cursed spirit was sighted in Shibuya last night. Jujutsu sorcerers have been dispatched to investigate. Civilians are advised to avoid the area until further notice.\n\nWitnesses describe the cursed spirit as having multiple arms and a distorted face. Several casualties have already been reported, and the area has been cordoned off by authorities working with jujutsu sorcerers.\n\nThis marks the third special grade appearance this month, raising concerns about a potential coordinated attack. The Jujutsu High principal has called for an emergency meeting to discuss the situation.',
-                        coverImageUrl: 'https://i.imgur.com/pSGUBUr.jpg',
-                        galleryImages: [
-                            'https://i.imgur.com/V9MuMVP.jpg',
-                            'https://i.imgur.com/RVNJx5O.jpg'
-                        ],
-                        date: yesterday.toISOString(),
-                        edited: null
-                    },
-                    {
-                        id: '3',
-                        title: 'New Cursed Technique Research Published',
-                        category: 'roblox-script',
-                        content: 'The Jujutsu Research Department has published groundbreaking findings on the development of cursed techniques. The study reveals new insights into how cursed energy can be manipulated more efficiently by sorcerers.\n\nThe research, led by Professor Masamichi Yaga, explores the relationship between innate talents and developed skills in cursed technique application. The findings suggest that with proper training, even sorcerers with average cursed energy reserves can significantly enhance their technique potency.\n\nThe full research paper is available to registered jujutsu sorcerers through the secure database. A public summary will be released next month after security clearance.',
-                        coverImageUrl: 'https://i.imgur.com/QCpz2IU.jpg',
-                        galleryImages: [
-                            'https://i.imgur.com/IuN9n69.jpg',
-                            'https://i.imgur.com/jCgYAFB.jpg',
-                            'https://i.imgur.com/UKQEMkT.jpg',
-                            'https://i.imgur.com/YTKM8bR.jpg'
-                        ],
-                        date: twoDaysAgo.toISOString(),
-                        edited: null
-                    }
-                ];
-
-                // Save sample data to localStorage
-                localStorage.setItem('jjkNews', JSON.stringify(newsItems));
+            // Load news items
+            async function loadNewsItems() {
+                newsItems = await window.dataManager.getNewsItems();
+                displayNews();
+                displayAdminNews();
+                updateDashboard();
             }
 
-            // Load social media links from localStorage
-            function loadSocialLinks() {
-                const socialLinks = JSON.parse(localStorage.getItem('jjkSocialLinks')) || {
-                    youtube: 'https://www.youtube.com',
-                    discord: 'https://discord.com'
-                };
+            // Load news items on initialization
+            loadNewsItems();
+
+            // Load social media links from data manager
+            async function loadSocialLinks() {
+                const socialLinks = await window.dataManager.getSocialLinks();
 
                 // Update the form inputs
                 youtubeLinkInput.value = socialLinks.youtube;
@@ -3236,7 +3196,7 @@
             }
 
             // Handle social links form submission
-            socialLinksForm.addEventListener('submit', function(e) {
+            socialLinksForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
                 const youtubeLink = youtubeLinkInput.value.trim();
@@ -3248,19 +3208,22 @@
                     return;
                 }
 
-                // Save to localStorage
+                // Save to data manager
                 const socialLinks = {
                     youtube: youtubeLink,
                     discord: discordLink
                 };
 
-                localStorage.setItem('jjkSocialLinks', JSON.stringify(socialLinks));
+                const success = await window.dataManager.saveSocialLinks(socialLinks);
 
-                // Update the actual links
-                youtubeIcon.href = youtubeLink;
-                discordIcon.href = discordLink;
-
-                showAdminMessage('Social media links updated successfully', 'success');
+                if (success) {
+                    // Update the actual links
+                    youtubeIcon.href = youtubeLink;
+                    discordIcon.href = discordLink;
+                    showAdminMessage('Social media links updated successfully', 'success');
+                } else {
+                    showAdminMessage('Failed to update social media links', 'error');
+                }
             });
 
             // Tab switching functionality
@@ -3368,7 +3331,7 @@
             }
 
             // Site settings form submission
-            siteSettingsForm.addEventListener('submit', function(e) {
+            siteSettingsForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
                 const newSiteTitle = siteTitleInput.value.trim();
@@ -3379,19 +3342,26 @@
                     return;
                 }
 
-                // Update the site title and news header
-                siteTitle.textContent = newSiteTitle;
-                newsHeader.textContent = newNewsHeader;
+                // Save to data manager
+                const settings = {
+                    siteTitle: newSiteTitle,
+                    newsHeader: newNewsHeader
+                };
 
-                // Save to localStorage
-                localStorage.setItem('jjkSiteTitle', newSiteTitle);
-                localStorage.setItem('jjkNewsHeader', newNewsHeader);
+                const success = await window.dataManager.saveSiteSettings(settings);
 
-                showAdminMessage('Site settings updated successfully', 'success');
+                if (success) {
+                    // Update the site title and news header
+                    siteTitle.textContent = newSiteTitle;
+                    newsHeader.textContent = newNewsHeader;
+                    showAdminMessage('Site settings updated successfully', 'success');
+                } else {
+                    showAdminMessage('Failed to update site settings', 'error');
+                }
             });
 
             // Admin settings form submission
-            adminSettingsForm.addEventListener('submit', function(e) {
+            adminSettingsForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
                 const newAdminCode = adminCodeInput.value.trim();
@@ -3401,26 +3371,33 @@
                     return;
                 }
 
-                // Save to localStorage
-                localStorage.setItem('jjkAdminCode', newAdminCode);
+                // Save to data manager
+                const settings = {
+                    adminCode: newAdminCode
+                };
 
-                showAdminMessage('Admin access code updated successfully', 'success');
-                adminCodeInput.value = '';
+                const success = await window.dataManager.saveAdminSettings(settings);
+
+                if (success) {
+                    showAdminMessage('Admin access code updated successfully', 'success');
+                    adminCodeInput.value = '';
+                } else {
+                    showAdminMessage('Failed to update admin access code', 'error');
+                }
             });
 
             // Function to load site settings
-            function loadSiteSettings() {
-                const savedSiteTitle = localStorage.getItem('jjkSiteTitle');
-                const savedNewsHeader = localStorage.getItem('jjkNewsHeader');
+            async function loadSiteSettings() {
+                const settings = await window.dataManager.getSiteSettings();
 
-                if (savedSiteTitle) {
-                    siteTitle.textContent = savedSiteTitle;
-                    siteTitleInput.value = savedSiteTitle;
+                if (settings.siteTitle) {
+                    siteTitle.textContent = settings.siteTitle;
+                    siteTitleInput.value = settings.siteTitle;
                 }
 
-                if (savedNewsHeader) {
-                    newsHeader.textContent = savedNewsHeader;
-                    newsHeaderInput.value = savedNewsHeader;
+                if (settings.newsHeader) {
+                    newsHeader.textContent = settings.newsHeader;
+                    newsHeaderInput.value = settings.newsHeader;
                 }
             }
 
@@ -3537,7 +3514,7 @@
             });
 
             // Handle news form submission
-            newsForm.addEventListener('submit', function(e) {
+            newsForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
                 const title = newsTitleInput.value.trim();
@@ -3571,7 +3548,17 @@
                         newsItems[index].galleryImages = galleryImages;
                         newsItems[index].edited = new Date().toISOString();
                     }
-                    showAdminMessage('News updated successfully', 'success');
+
+                    // Save to data manager
+                    const success = await window.dataManager.saveNewsItems(newsItems);
+
+                    if (success) {
+                        showAdminMessage('News updated successfully', 'success');
+                    } else {
+                        showAdminMessage('Failed to update news', 'error');
+                        return;
+                    }
+
                     editIdInput.value = '';
                     newsSubmitBtn.textContent = 'Add News';
                 } else {
@@ -3588,11 +3575,19 @@
                     };
 
                     newsItems.unshift(newNews); // Add to beginning of array
-                    showAdminMessage('News added successfully', 'success');
-                }
 
-                // Save to localStorage
-                localStorage.setItem('jjkNews', JSON.stringify(newsItems));
+                    // Save to data manager
+                    const success = await window.dataManager.saveNewsItems(newsItems);
+
+                    if (success) {
+                        showAdminMessage('News added successfully', 'success');
+                    } else {
+                        showAdminMessage('Failed to add news', 'error');
+                        // Remove the new item since saving failed
+                        newsItems.shift();
+                        return;
+                    }
+                }
 
                 // Update displays
                 displayNews();
@@ -3917,22 +3912,33 @@
             }
 
             // Function to delete news
-            function deleteNews(id) {
+            async function deleteNews(id) {
                 // Find the news item to get its title for the confirmation message
                 const newsItem = newsItems.find(item => item.id === id);
                 if (!newsItem) return;
 
                 // Remove the news item
                 newsItems = newsItems.filter(item => item.id !== id);
-                localStorage.setItem('jjkNews', JSON.stringify(newsItems));
 
-                // Update displays
-                displayNews();
-                displayAdminNews();
-                updateDashboard();
+                // Save to data manager
+                const success = await window.dataManager.saveNewsItems(newsItems);
 
-                // Show success message
-                showAdminMessage(`Post "${newsItem.title}" deleted successfully`, 'success');
+                if (success) {
+                    // Update displays
+                    displayNews();
+                    displayAdminNews();
+                    updateDashboard();
+
+                    // Show success message
+                    showAdminMessage(`Post "${newsItem.title}" deleted successfully`, 'success');
+                } else {
+                    // Restore the deleted item since saving failed
+                    newsItems.push(newsItem);
+                    // Sort by date to maintain order
+                    newsItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    showAdminMessage(`Failed to delete post "${newsItem.title}"`, 'error');
+                }
             }
 
             // Function to show admin messages
@@ -3969,82 +3975,5 @@
             });
         });
     </script>
-    <script src="code-protection.min.js" data-auto-protect="true"></script>
-    
-<script>
-// Password protection initialization
-(function() {
-    // Obfuscated password parts
-    const _0x5a7b = ['MDk=', 'ODg=', 'MTE=', 'MzE=', 'Njg4'];
-    const _0x3f8c = [
-        'MDk=',
-        'ODg=',
-        'MTE=',
-        'MzE=',
-        'Njg4'
-    ];
-    
-    // Password verification function
-    window._verifyAdminPassword = function(password) {
-        // Basic validation
-        if (!password || password.length !== 10) return false;
-        if (password[0] !== '0' || password[4] !== '1') return false;
-        
-        // Decode the password parts
-        try {
-            const parts = _0x3f8c.map(p => atob(p));
-            const expectedPassword = parts.join('');
-            
-            // Compare with input
-            return password === expectedPassword;
-        } catch(e) {
-            return false;
-        }
-    };
-    
-    // Anti-debugging measures
-    const _0x4d2c = function() {
-        debugger;
-        setTimeout(_0x4d2c, 100);
-    };
-    _0x4d2c();
-    
-    // Disable developer tools
-    document.addEventListener('keydown', function(e) {
-        // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
-        if (
-            e.keyCode === 123 || 
-            (e.ctrlKey && e.shiftKey && e.keyCode === 73) || 
-            (e.ctrlKey && e.shiftKey && e.keyCode === 74) || 
-            (e.ctrlKey && e.keyCode === 85)
-        ) {
-            e.preventDefault();
-            return false;
-        }
-    });
-    
-    // Disable right-click
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        return false;
-    });
-    
-    // Add console warning
-    console.log('%cWARNING!', 'color: red; font-size: 30px; font-weight: bold; text-shadow: 1px 1px 2px black;');
-    console.log('%cThis is a protected website. Using the developer console may expose you to security risks.', 'color: red; font-size: 16px;');
-    
-    // Override the original password check function
-    const originalCheckPassword = window.checkPassword || function() { return false; };
-    window.checkPassword = function(input) {
-        // Add multiple layers of verification
-        const isValid = _verifyAdminPassword(input);
-        const originalResult = originalCheckPassword(input);
-        
-        // Both must pass for security
-        return isValid && originalResult;
-    };
-})();
-</script>
-
 </body>
 </html>

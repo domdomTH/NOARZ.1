@@ -26,12 +26,13 @@ class DataManager {
             try {
                 // Check if GitHub API is enabled in config
                 if (window.GITHUB_CONFIG && window.GITHUB_CONFIG.enabled) {
-                    const { username, repoName, token } = window.GITHUB_CONFIG;
-                    
+                    const { username, repoName } = window.GITHUB_CONFIG;
+                    const token = window.GITHUB_CONFIG.getToken();
+
                     if (username && repoName && token) {
                         this.githubApi = new window.GitHubAPI(token);
                         const success = await this.githubApi.initialize(username, repoName);
-                        
+
                         if (success) {
                             console.log('Using GitHub API for data storage');
                             this.useGitHub = true;
@@ -45,7 +46,7 @@ class DataManager {
                         console.warn('GitHub API configuration is incomplete, falling back to localStorage');
                     }
                 }
-                
+
                 // Fallback to localStorage
                 console.log('Using localStorage for data storage');
                 this.useGitHub = false;
@@ -78,7 +79,7 @@ class DataManager {
      */
     async getNewsItems() {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.getNewsItems();
         } else {
@@ -99,7 +100,7 @@ class DataManager {
      */
     async saveNewsItems(newsItems) {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.saveNewsItems(newsItems);
         } else {
@@ -115,7 +116,7 @@ class DataManager {
      */
     async getSiteSettings() {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.getSiteSettings();
         } else {
@@ -134,7 +135,7 @@ class DataManager {
      */
     async saveSiteSettings(settings) {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.saveSiteSettings(settings);
         } else {
@@ -151,7 +152,7 @@ class DataManager {
      */
     async getSocialLinks() {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.getSocialLinks();
         } else {
@@ -171,7 +172,7 @@ class DataManager {
      */
     async saveSocialLinks(links) {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.saveSocialLinks(links);
         } else {
@@ -187,7 +188,7 @@ class DataManager {
      */
     async getAdminSettings() {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.getAdminSettings();
         } else {
@@ -205,7 +206,7 @@ class DataManager {
      */
     async saveAdminSettings(settings) {
         await this._ensureInitialized();
-        
+
         if (this.useGitHub) {
             return await this.githubApi.saveAdminSettings(settings);
         } else {

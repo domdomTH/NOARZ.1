@@ -55,7 +55,7 @@
 </head>
 <body>
     <h1>GitHub API Test</h1>
-    
+
     <div class="container">
         <h2>Configuration</h2>
         <div>
@@ -73,7 +73,7 @@
         <button id="initialize">Initialize GitHub API</button>
         <div id="init-result" class="result"></div>
     </div>
-    
+
     <div class="container">
         <h2>Test Operations</h2>
         <button id="test-get">Test Get File</button>
@@ -92,7 +92,7 @@
         </div>
         <div id="test-result" class="result"></div>
     </div>
-    
+
     <div class="container">
         <h2>Save Configuration</h2>
         <button id="save-config">Save to github-config.js</button>
@@ -110,46 +110,46 @@
             const tokenInput = document.getElementById('token');
             const initButton = document.getElementById('initialize');
             const initResult = document.getElementById('init-result');
-            
+
             const testPathInput = document.getElementById('test-path');
             const testContentInput = document.getElementById('test-content');
             const testGetButton = document.getElementById('test-get');
             const testSaveButton = document.getElementById('test-save');
             const testDeleteButton = document.getElementById('test-delete');
             const testResult = document.getElementById('test-result');
-            
+
             const saveConfigButton = document.getElementById('save-config');
             const saveResult = document.getElementById('save-result');
-            
+
             // GitHub API instance
             let githubApi = null;
-            
+
             // Load config if available
             if (window.GITHUB_CONFIG) {
                 usernameInput.value = window.GITHUB_CONFIG.username || '';
                 repoInput.value = window.GITHUB_CONFIG.repoName || '';
-                tokenInput.value = window.GITHUB_CONFIG.token || '';
+                tokenInput.value = window.GITHUB_CONFIG.getToken() || '';
             }
-            
+
             // Initialize GitHub API
             initButton.addEventListener('click', async function() {
                 const username = usernameInput.value.trim();
                 const repo = repoInput.value.trim();
                 const token = tokenInput.value.trim();
-                
+
                 if (!username || !repo || !token) {
                     initResult.textContent = 'Please fill in all fields';
                     initResult.className = 'result error';
                     return;
                 }
-                
+
                 try {
                     initResult.textContent = 'Initializing...';
                     initResult.className = 'result';
-                    
+
                     githubApi = new GitHubAPI(token);
                     const success = await githubApi.initialize(username, repo);
-                    
+
                     if (success) {
                         initResult.textContent = 'GitHub API initialized successfully!';
                         initResult.className = 'result success';
@@ -163,7 +163,7 @@
                     console.error(error);
                 }
             });
-            
+
             // Test Get File
             testGetButton.addEventListener('click', async function() {
                 if (!githubApi) {
@@ -171,21 +171,21 @@
                     testResult.className = 'result error';
                     return;
                 }
-                
+
                 const path = testPathInput.value.trim();
-                
+
                 if (!path) {
                     testResult.textContent = 'Please enter a file path';
                     testResult.className = 'result error';
                     return;
                 }
-                
+
                 try {
                     testResult.textContent = 'Getting file...';
                     testResult.className = 'result';
-                    
+
                     const file = await githubApi.getFile(path);
-                    
+
                     if (file) {
                         testResult.textContent = `File found:\n${JSON.stringify(file, null, 2)}`;
                         testContentInput.value = file.content;
@@ -200,7 +200,7 @@
                     console.error(error);
                 }
             });
-            
+
             // Test Save File
             testSaveButton.addEventListener('click', async function() {
                 if (!githubApi) {
@@ -208,22 +208,22 @@
                     testResult.className = 'result error';
                     return;
                 }
-                
+
                 const path = testPathInput.value.trim();
                 const content = testContentInput.value.trim();
-                
+
                 if (!path || !content) {
                     testResult.textContent = 'Please enter a file path and content';
                     testResult.className = 'result error';
                     return;
                 }
-                
+
                 try {
                     testResult.textContent = 'Saving file...';
                     testResult.className = 'result';
-                    
+
                     const result = await githubApi.saveFile(path, content, 'Test save from API test page');
-                    
+
                     testResult.textContent = `File saved successfully:\n${JSON.stringify(result, null, 2)}`;
                     testResult.className = 'result success';
                 } catch (error) {
@@ -232,7 +232,7 @@
                     console.error(error);
                 }
             });
-            
+
             // Test Delete File
             testDeleteButton.addEventListener('click', async function() {
                 if (!githubApi) {
@@ -240,21 +240,21 @@
                     testResult.className = 'result error';
                     return;
                 }
-                
+
                 const path = testPathInput.value.trim();
-                
+
                 if (!path) {
                     testResult.textContent = 'Please enter a file path';
                     testResult.className = 'result error';
                     return;
                 }
-                
+
                 try {
                     testResult.textContent = 'Deleting file...';
                     testResult.className = 'result';
-                    
+
                     const result = await githubApi.deleteFile(path, 'Test delete from API test page');
-                    
+
                     testResult.textContent = `File deleted successfully:\n${JSON.stringify(result, null, 2)}`;
                     testResult.className = 'result success';
                 } catch (error) {
@@ -263,53 +263,74 @@
                     console.error(error);
                 }
             });
-            
+
             // Save Configuration
             saveConfigButton.addEventListener('click', async function() {
                 const username = usernameInput.value.trim();
                 const repo = repoInput.value.trim();
                 const token = tokenInput.value.trim();
-                
+
                 if (!username || !repo || !token) {
                     saveResult.textContent = 'Please fill in all fields';
                     saveResult.className = 'result error';
                     return;
                 }
-                
+
                 try {
                     saveResult.textContent = 'Saving configuration...';
                     saveResult.className = 'result';
-                    
+
                     const configContent = `/**
  * GitHub API Configuration
  * This file contains the configuration for the GitHub API integration
- * 
+ *
  * Instructions:
  * 1. Create a GitHub Personal Access Token with 'repo' scope
  *    (https://github.com/settings/tokens)
  * 2. Create a repository to store your website data
- * 3. Update the values below with your GitHub username, repository name, and token
+ * 3. Update the values below with your GitHub username and repository name
+ *
+ * IMPORTANT: The token is stored in sessionStorage for security reasons.
+ * It will be lost when the browser is closed, which is a security feature.
+ * Users will need to re-enter their token when they return to the site.
  */
 
 const GITHUB_CONFIG = {
     // Your GitHub username
     username: '${username}',
-    
+
     // Repository name where data will be stored
     repoName: '${repo}',
-    
-    // Your GitHub Personal Access Token
-    // IMPORTANT: This token grants access to your GitHub account.
-    // For production use, implement proper authentication and token storage.
-    token: '${token}',
-    
+
     // Enable GitHub API integration (set to false to use localStorage instead)
-    enabled: true
+    enabled: true,
+
+    // Securely get the token from sessionStorage
+    getToken: function() {
+        return sessionStorage.getItem('github_token');
+    },
+
+    // Securely save the token to sessionStorage
+    setToken: function(token) {
+        if (token) {
+            sessionStorage.setItem('github_token', token);
+            return true;
+        }
+        return false;
+    },
+
+    // Clear the token from sessionStorage
+    clearToken: function() {
+        sessionStorage.removeItem('github_token');
+    }
 };
 
 // Export the configuration
 window.GITHUB_CONFIG = GITHUB_CONFIG;`;
-                    
+
+                    // Save the token to sessionStorage
+                    window.GITHUB_CONFIG.setToken(token);
+
                     // Use fetch to save the file
                     const response = await fetch('github-config.js', {
                         method: 'PUT',
@@ -318,7 +339,7 @@ window.GITHUB_CONFIG = GITHUB_CONFIG;`;
                         },
                         body: configContent
                     });
-                    
+
                     if (response.ok) {
                         saveResult.textContent = 'Configuration saved successfully! Refresh the page to apply changes.';
                         saveResult.className = 'result success';
@@ -329,7 +350,7 @@ window.GITHUB_CONFIG = GITHUB_CONFIG;`;
                     saveResult.textContent = `Error: ${error.message}. You may need to manually update the github-config.js file.`;
                     saveResult.className = 'result error';
                     console.error(error);
-                    
+
                     // Show the configuration to copy manually
                     saveResult.textContent += `\n\nCopy this configuration to github-config.js:\n\n${configContent}`;
                 }
